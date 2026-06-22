@@ -463,6 +463,12 @@ export const useRegexStore = defineStore('regex', () => {
     currentStep.value = 0
   }
 
+  function goToStep(stepIndex: number) {
+    if (matchResult.value && stepIndex >= 0 && stepIndex < matchResult.value.steps.length) {
+      currentStep.value = stepIndex
+    }
+  }
+
   function play() {
     isPlaying.value = true
     const interval = setInterval(() => {
@@ -483,6 +489,6 @@ export const useRegexStore = defineStore('regex', () => {
     pattern, testString, currentStep, isPlaying, nfa, matchResult, ast, error,
     selectedTemplate, groupColors, matchHighlight,
     execute, setPattern, setTestString, applyTemplate,
-    stepForward, stepBackward, resetStep, play, stop
+    stepForward, stepBackward, resetStep, goToStep, play, stop
   }
 })

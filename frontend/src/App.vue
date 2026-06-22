@@ -14,6 +14,7 @@
       <div class="lg:w-1/2 space-y-4">
         <NfaVisualizer />
         <MatchHighlight />
+        <StepList />
       </div>
 
       <div class="lg:w-1/4 space-y-4">
@@ -64,6 +65,7 @@ import RegexEditor from './components/RegexEditor.vue'
 import NfaVisualizer from './components/NfaVisualizer.vue'
 import MatchHighlight from './components/MatchHighlight.vue'
 import TemplateLibrary from './components/TemplateLibrary.vue'
+import StepList from './components/StepList.vue'
 
 const store = useRegexStore()
 onMounted(() => store.execute())
