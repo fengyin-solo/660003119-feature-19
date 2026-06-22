@@ -45,11 +45,42 @@
         <div class="bg-slate-800 rounded-lg p-4 border border-slate-700">
           <h3 class="text-sm font-bold text-slate-400 mb-3">当前步骤详情</h3>
           <div v-if="store.matchResult && store.matchResult.steps[store.currentStep]" class="space-y-1 text-sm">
-            <div>字符索引: <span class="text-cyan-400">{{ store.matchResult.steps[store.currentStep].charIndex }}</span></div>
-            <div>当前字符: <span class="text-yellow-400 font-mono">'{{ store.matchResult.steps[store.currentStep].char }}'</span></div>
-            <div>状态转换: <span class="text-green-400">{{ store.matchResult.steps[store.currentStep].currentState }}</span> → <span class="text-blue-400">{{ store.matchResult.steps[store.currentStep].nextState }}</span></div>
-            <div>转移符号: <span class="text-purple-400 font-mono">{{ store.matchResult.steps[store.currentStep].transition }}</span></div>
-            <div v-if="store.matchResult.steps[store.currentStep].isBacktrack" class="text-orange-400 font-bold">⚠ 回溯发生</div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">步骤编号</span>
+              <span class="text-cyan-400 font-mono">#{{ store.currentStep }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">字符索引</span>
+              <span class="text-cyan-400">{{ store.matchResult.steps[store.currentStep].charIndex }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">当前字符</span>
+              <span class="text-yellow-400 font-mono">
+                {{ formatChar(store.matchResult.steps[store.currentStep].char) }}
+              </span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-slate-500">状态转换</span>
+              <span class="font-mono">
+                <span :class="store.matchResult.steps[store.currentStep].currentState === -1 ? 'text-slate-500' : 'text-green-400'">
+                  {{ store.matchResult.steps[store.currentStep].currentState === -1 ? '—' : 'S' + store.matchResult.steps[store.currentStep].currentState }}
+                </span>
+                <span class="text-slate-500 mx-1">→</span>
+                <span :class="store.matchResult.steps[store.currentStep].isBacktrack ? 'text-red-400' : (store.matchResult.steps[store.currentStep].nextState === -1 ? 'text-slate-500' : 'text-blue-400')">
+                  {{ store.matchResult.steps[store.currentStep].isBacktrack ? '✗ FAIL' : (store.matchResult.steps[store.currentStep].nextState === -1 ? '—' : 'S' + store.matchResult.steps[store.currentStep].nextState) }}
+                </span>
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">转移符号</span>
+              <span class="text-purple-400 font-mono">{{ store.matchResult.steps[store.currentStep].transition }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">步骤类型</span>
+              <span v-if="store.matchResult.steps[store.currentStep].isBacktrack" class="text-orange-400 font-bold">⚠ 回溯/失败</span>
+              <span v-else-if="store.matchResult.steps[store.currentStep].isMatch" class="text-green-400">✓ 正常匹配</span>
+              <span v-else class="text-slate-400">其他</span>
+            </div>
           </div>
           <div v-else class="text-slate-500 text-sm">无步骤数据</div>
         </div>
@@ -68,5 +99,13 @@ import TemplateLibrary from './components/TemplateLibrary.vue'
 import StepList from './components/StepList.vue'
 
 const store = useRegexStore()
+
+function formatChar(ch: string): string {
+  if (ch === '\n') return '\\n (换行)'
+  if (ch === ' ') return '␣ (空格)'
+  if (ch === '\t') return '\\t (制表)'
+  return `'${ch}'`
+}
+
 onMounted(() => store.execute())
 </script>

@@ -12,7 +12,7 @@
       <input
         v-model="searchQuery"
         type="text"
-        placeholder="搜索步骤：字符、状态、转移..."
+        placeholder="搜索步骤：字符、状态、转移、回溯、失败..."
         class="flex-1 px-3 py-2 bg-slate-900 border border-slate-600 rounded text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
       />
       <select
@@ -34,17 +34,23 @@
           class="text-xs font-mono px-2 py-1.5 rounded cursor-pointer transition-colors"
           :class="getStepClass(step)"
         >
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
             <span class="text-slate-500 w-12 shrink-0">[{{ step.stepIndex }}]</span>
-            <span class="text-yellow-400 w-6 shrink-0">'{{ step.char }}'</span>
+            <span class="text-yellow-400 shrink-0" :class="step.char === '\n' ? 'italic' : ''">
+              {{ formatChar(step.char) }}
+            </span>
             <span class="text-slate-500 shrink-0">→</span>
-            <span class="text-green-400 shrink-0">S{{ step.currentState }}</span>
+            <span class="text-green-400 shrink-0">
+              {{ step.currentState === -1 ? '—' : 'S' + step.currentState }}
+            </span>
             <span class="text-slate-500 shrink-0">→</span>
             <span :class="step.isBacktrack ? 'text-red-400' : 'text-blue-400'" class="shrink-0">
-              {{ step.isBacktrack ? 'FAIL' : 'S' + step.nextState }}
+              {{ step.isBacktrack ? '✗ FAIL' : (step.nextState === -1 ? '—' : 'S' + step.nextState) }}
             </span>
-            <span class="text-purple-400 ml-2 shrink-0">({{ step.transition }})</span>
+            <span class="text-purple-400 ml-1 shrink-0">({{ step.transition }})</span>
+            <span class="text-slate-500 text-[10px] shrink-0">@idx{{ step.charIndex }}</span>
             <span v-if="step.isBacktrack" class="text-orange-400 font-bold ml-auto shrink-0">⚠ 回溯</span>
+            <span v-else-if="step.isMatch" class="text-green-400 text-[10px] ml-auto shrink-0">✓ 匹配</span>
           </div>
         </div>
       </div>
@@ -93,6 +99,13 @@ const filterType = ref('all')
 const jumpIndex = ref(0)
 const listContainer = ref<HTMLElement | null>(null)
 
+function formatChar(ch: string): string {
+  if (ch === '\n') return '\\n'
+  if (ch === ' ') return '␣'
+  if (ch === '\t') return '\\t'
+  return `'${ch}'`
+}
+
 const filteredSteps = computed(() => {
   if (!store.matchResult) return []
   let steps = store.matchResult.steps
@@ -105,13 +118,19 @@ const filteredSteps = computed(() => {
 
   if (searchQuery.value.trim()) {
     const query = searchQuery.value.toLowerCase().trim()
-    steps = steps.filter(s =>
-      s.char.toLowerCase().includes(query) ||
-      String(s.currentState).includes(query) ||
-      String(s.nextState).includes(query) ||
-      s.transition.toLowerCase().includes(query) ||
-      String(s.stepIndex).includes(query)
-    )
+    const isBacktrackQuery = ['回溯', '失败', 'backtrack', 'fail', '错误', 'error'].some(k => query.includes(k))
+    steps = steps.filter(s => {
+      const matchBasic =
+        s.char.toLowerCase().includes(query) ||
+        String(s.currentState).includes(query) ||
+        String(s.nextState).includes(query) ||
+        s.transition.toLowerCase().includes(query) ||
+        String(s.stepIndex).includes(query) ||
+        String(s.charIndex).includes(query)
+      const matchBacktrack = isBacktrackQuery && s.isBacktrack
+      const matchSuccessQuery = ['成功', '匹配', 'success', 'match'].some(k => query.includes(k)) && s.isMatch
+      return matchBasic || matchBacktrack || matchSuccessQuery
+    })
   }
 
   return steps

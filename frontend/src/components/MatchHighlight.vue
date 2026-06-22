@@ -25,9 +25,17 @@
       <h4 class="text-xs font-bold text-slate-500 mb-2">执行步骤 (最近5步)</h4>
       <div class="space-y-1 max-h-32 overflow-y-auto">
         <div v-for="step in recentSteps" :key="step.stepIndex"
-          class="text-xs font-mono px-2 py-1 rounded"
-          :class="step.isBacktrack ? 'bg-orange-900 text-orange-300' : step.stepIndex === store.currentStep ? 'bg-cyan-900 text-cyan-300' : 'bg-slate-900 text-slate-400'">
-          [{{ step.stepIndex }}] '{{ step.char }}' → 状态{{ step.currentState}}→{{ step.nextState }} ({{ step.transition }}){{ step.isBacktrack ? ' ⚠回溯' : '' }}
+          @click="store.goToStep(step.stepIndex)"
+          class="text-xs font-mono px-2 py-1 rounded cursor-pointer transition-colors"
+          :class="step.isBacktrack ? 'bg-orange-900/50 text-orange-300 hover:bg-orange-900' : step.stepIndex === store.currentStep ? 'bg-cyan-900 text-cyan-200 ring-1 ring-cyan-500' : 'bg-slate-900 text-slate-400 hover:bg-slate-700'">
+          <span class="text-slate-500">[{{ step.stepIndex }}]</span>
+          <span class="text-yellow-400 ml-1">{{ formatChar(step.char) }}</span>
+          <span class="text-slate-500 mx-1">→</span>
+          <span class="text-green-400">{{ step.currentState === -1 ? '—' : 'S' + step.currentState }}</span>
+          <span class="text-slate-500 mx-1">→</span>
+          <span :class="step.isBacktrack ? 'text-red-400' : 'text-blue-400'">{{ step.isBacktrack ? '✗FAIL' : (step.nextState === -1 ? '—' : 'S' + step.nextState) }}</span>
+          <span class="text-purple-400 ml-1">({{ step.transition }})</span>
+          <span v-if="step.isBacktrack" class="text-orange-400 font-bold ml-1">⚠回溯</span>
         </div>
       </div>
     </div>
@@ -39,6 +47,14 @@ import { computed } from 'vue'
 import { useRegexStore } from '../store/regex'
 
 const store = useRegexStore()
+
+function formatChar(ch: string): string {
+  if (ch === '\n') return '\\n'
+  if (ch === ' ') return '␣'
+  if (ch === '\t') return '\\t'
+  return `'${ch}'`
+}
+
 const recentSteps = computed(() => {
   if (!store.matchResult) return []
   const end = store.currentStep + 1
